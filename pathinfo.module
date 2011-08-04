@@ -1,0 +1,151 @@
+<?php
+
+/**
+* Implementation of hook_menu().
+*/
+function pathinfo_menu() {
+  $items = array();
+
+  $items['node/%node/pathinfo'] = array(
+    'title' => 'Path Info',
+    'page callback' => 'pathinfo_detail_page',
+    'page arguments' => array(1, 'node'),
+    'access callback' => 'user_access',
+    'access arguments' => array('access path info'),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 100,
+  );
+
+  return $items;
+}
+
+
+/**
+ * Implementation of hook_block().
+ *
+ * @param <type> $node
+ * @return <type>
+ */
+function pathinfo_block($op = 'list', $delta = 0, $edit = array()) {
+  if ($op == 'list') {
+    $blocks[0] = array(
+        'info' => t('PathInfo URL Information'),
+        'weight' => 0,
+        'status' => 1,
+        'region' => 'header',
+    );
+    
+    return $blocks;
+
+  }
+  else if ($op =='view') {
+    switch ($delta) {
+      case 0:
+        $block = array(
+          'subject' => t('Dog'),
+          'content' => pathinfo_detail(),
+        );
+      break;
+    }
+    
+    return $block;
+  }
+}
+
+
+
+function pathinfo_detail($path = NULL) {
+  if ( $path == NULL ) {
+    $path = $_GET['q'];
+    // If there is no path, we must be looking at the front page.
+    if (trim($path) == '') {
+      $path = '<front>';
+    } else {
+      $path = drupal_get_path_alias($_GET['q']);
+    }
+  }
+  
+  $info = menu_get_item($path);
+
+  dpm($info);
+  
+  dpm(pathinfo_get_module_for_function($info['page_callback']));
+
+  $module_info = module_invoke_all('module_info');
+  //dpm($module_info);
+  
+
+  //$module =
+
+  $alias = url($path);
+
+  if ($path == $_GET['q']) {
+   
+  }
+
+  dpm($info);
+  
+  return $output;
+}
+
+/**
+ * Hack to implement module_info hook for common modules.
+ */
+function pathinfo_module_info($info) {
+
+  $return[] = 'butts';
+
+  $default_modules = array(
+    'views',
+    'content',
+    'node',
+  );
+
+  // Go through the module info hooks we implement.
+  // If they are implemented elsewhere, they will be called by module_invoke_all.
+  // otherwise use our defaults.
+  /*
+  foreach($default_modules as $module) {
+   $function = $module .'_module_info';
+   if(!function_exists($module .'_module_info')) {
+     $return[] = call_user_func($function);
+   }
+  }
+  */
+
+  return $return;
+ 
+}
+
+function views_module_info() {
+  return 'views';
+}
+
+function node_module_info() {
+  return 'node';
+}
+
+/**
+ * Given a function name, return the module that it appears in.
+ *
+ * @todo It seems that module_list() is very fast, and we can call it many times
+ * per request without a meaningful perfomance impact. However, it is worth monitoring
+ * for performance issues.
+ *
+ * @param string $function_name
+ * @return string The module name, or an empty string if not found.
+ */
+function pathinfo_get_module_for_function($function_name) {
+  $implemented_in = '';
+  $modules = module_list();
+  // Go through all loaded modules
+  foreach ($modules as $module) {
+    if (strstr($module, $function_name)) {
+      if (strlen($module) > strlen($implemented_in)) {
+        $implemented_in = $module;
+      }
+    }
+  }
+
+  return $implemented_in;
+}
