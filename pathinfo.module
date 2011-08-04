@@ -67,11 +67,11 @@ function pathinfo_detail($path = NULL) {
   
   $info = menu_get_item($path);
 
-  dpm($info);
+  //dpm($info);
   
-  dpm(pathinfo_get_module_for_function($info['page_callback']));
-
-  $module_info = module_invoke_all('module_info');
+  // probably don't need module invoke all as we'll only ever be calling the
+  // function for the module that implements this page view.
+  //$module_info = module_invoke_all('module_info');
   //dpm($module_info);
   
 
@@ -83,7 +83,7 @@ function pathinfo_detail($path = NULL) {
    
   }
 
-  dpm($info);
+  //dpm($info);
   
   return $output;
 }
@@ -128,6 +128,9 @@ function node_module_info() {
 /**
  * Given a function name, return the module that it appears in.
  *
+ * @todo test with modules with overlapping names, eg node and node_dog. Just have to
+ * find some good test cases.
+ * 
  * @todo It seems that module_list() is very fast, and we can call it many times
  * per request without a meaningful perfomance impact. However, it is worth monitoring
  * for performance issues.
@@ -140,7 +143,8 @@ function pathinfo_get_module_for_function($function_name) {
   $modules = module_list();
   // Go through all loaded modules
   foreach ($modules as $module) {
-    if (strstr($module, $function_name)) {
+    //dpm(strstr($function_name, $module), 'strstr');
+    if (strstr($function_name, $module)) {
       if (strlen($module) > strlen($implemented_in)) {
         $implemented_in = $module;
       }
