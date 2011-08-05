@@ -43,7 +43,7 @@ function pathinfo_block($op = 'list', $delta = 0, $edit = array()) {
       case 0:
         $block = array(
           'subject' => t('Dog'),
-          'content' => pathinfo_detail(),
+          'content' => theme('infopane', pathinfo_detail()),
         );
       break;
     }
@@ -52,40 +52,85 @@ function pathinfo_block($op = 'list', $delta = 0, $edit = array()) {
   }
 }
 
+/**
+ * Implementation of hook_theme().
+ */
+function pathinfo_theme() {
+  return array(
+    'infopane' => array(
+      'variables' => array('pathinfo' => NULL),
+      'template' => 'infopane'
+     )
+  );
+}
 
 
+/**
+ * Assemble a structured array that contains information about a given path.
+ * The array will contain data such as the function that fulfils the path request,
+ * where it is defined, whether the path is an alias, and other details.
+ * 
+ * Information about the implementing module is stored in 
+ * $info['module_info'][$module_name]. This information can be extended by 
+ * modules by implementing hook_module_info(). hook_module_info() implementations
+ * must return an array.
+ * 
+ * 
+ * If the path is not passed explicitly, this function will use the path of the
+ * current page.
+ * 
+ * 
+ * @param string $path 
+ *  Path to check.
+ * 
+ * @return array
+ *  A structured array containing information about $path, or FALSE if nothing
+ *  can be found.
+ * 
+ */
 function pathinfo_detail($path = NULL) {
+  // If no path has been passed, get the path from the current URL
   if ( $path == NULL ) {
     $path = $_GET['q'];
     // If there is no path, we must be looking at the front page.
-    if (trim($path) == '') {
-      $path = '<front>';
-    } else {
-      $path = drupal_get_path_alias($_GET['q']);
+    if (drupal_is_front_page()) {
+      $front_page = TRUE;
+      $path = drupal_get_normal_path(variable_get('site_frontpage', 'node'));
     }
   }
   
-  $info = menu_get_item($path);
-
-  //dpm($info);
+  // Check if the path is an alias.
+  if (function_exists('path_help')) {
+    $alias = drupal_get_path_alias($path);
+  }
+  
+  $info = array();
+  
+  $info['menu'] = menu_get_item($path);
+  // Get the module that contains the function that serves this page.
+  $function = $info['menu']['page_callback'];
+  $module = pathinfo_get_module_for_function($function);
+  
+  $info['module_info'][$module] = array(
+    'function' => $function,
+    'path' =>  realpath(drupal_get_path('module', $module)),
+  ) + call_user_func($module .'_module_info', $path); // Add any additional module info that hooks may want to provide.
+  
+  // Save some general info that is useful for theming
+  $info['is_front_page'] = (bool)$front_page;
+  $info['alias'] = (string)$alias;
+  $info['path_requested'] = $path;
+  $info['is_alias'] = $alias == $path ? TRUE : FALSE;
+  dpm($info);
+  return $info;
+  
+  //$info['module']
   
   // probably don't need module invoke all as we'll only ever be calling the
   // function for the module that implements this page view.
   //$module_info = module_invoke_all('module_info');
   //dpm($module_info);
   
-
-  //$module =
-
-  $alias = url($path);
-
-  if ($path == $_GET['q']) {
-   
-  }
-
-  //dpm($info);
-  
-  return $output;
 }
 
 /**
@@ -93,7 +138,6 @@ function pathinfo_detail($path = NULL) {
  */
 function pathinfo_module_info($info) {
 
-  $return[] = 'butts';
 
   $default_modules = array(
     'views',
@@ -121,8 +165,9 @@ function views_module_info() {
   return 'views';
 }
 
-function node_module_info() {
-  return 'node';
+function node_module_info($path) {
+  //$nid = 'no'
+  
 }
 
 /**
@@ -131,9 +176,9 @@ function node_module_info() {
  * @todo test with modules with overlapping names, eg node and node_dog. Just have to
  * find some good test cases.
  * 
- * @todo It seems that module_list() is very fast, and we can call it many times
- * per request without a meaningful perfomance impact. However, it is worth monitoring
- * for performance issues.
+ * @todo It seems that module_list() is very fast (use static cache), and we can call 
+ * it many times per request without a meaningful perfomance impact. However, it
+ * is worth monitoring for performance issues.
  *
  * @param string $function_name
  * @return string The module name, or an empty string if not found.
