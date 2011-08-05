@@ -114,7 +114,18 @@ function pathinfo_detail($path = NULL) {
   $info['module_info'][$module] = array(
     'function' => $function,
     'path' =>  realpath(drupal_get_path('module', $module)),
-  ) + call_user_func($module .'_module_info', $path); // Add any additional module info that hooks may want to provide.
+  ); 
+  
+  // If this module provides extra info, let it add it.
+  $hook_function = $module .'_module_info';
+  // Check that this function returns an array before adding it, 
+  // otherwise we might get a fatal PHP error.
+  if (function_exists($hook_function)) {
+    $module_info = call_user_func($module .'_module_info', $path); // Add any additional module info that hooks may want to provide.
+    if (is_array($module_info)) {
+      $info['module_info'][$module] += $module_info;
+    }
+  }
   
   // Save some general info that is useful for theming
   $info['is_front_page'] = (bool)$front_page;
@@ -167,6 +178,7 @@ function views_module_info() {
 
 function node_module_info($path) {
   //$nid = 'no'
+  return array('test' => 'test');
   
 }
 
