@@ -1,13 +1,14 @@
 <?php
 
 /**
-* Implementation of hook_menu().
-*/
+ * Implementation of hook_menu().
+ */
 function pathinfo_menu() {
   $items = array();
 
+  // Add a tab to node view pages
   $items['node/%node/pathinfo'] = array(
-    'title' => 'Path Info',
+    'title' => t('Path Info'),
     'page callback' => 'pathinfo_detail_page',
     'page arguments' => array(1, 'node'),
     'access callback' => 'user_access',
@@ -16,9 +17,25 @@ function pathinfo_menu() {
     'weight' => 100,
   );
 
+  $items['admin/settings/pathinfo'] = array(
+    'title' => t('Path Info'),
+    'description' => t('For a given path, view which module implements it, and other data.'),
+    'page callback' => 'pathinfo_detail_page',
+    'access callback' => 'user_access',
+    'access arguments' => array('access path info'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+
   return $items;
 }
 
+/**
+ * Implementation of hook_perm().
+ */
+function pathinfo_perm() {
+  return array('access path info');
+}
 
 /**
  * Implementation of hook_block().
@@ -29,25 +46,23 @@ function pathinfo_menu() {
 function pathinfo_block($op = 'list', $delta = 0, $edit = array()) {
   if ($op == 'list') {
     $blocks[0] = array(
-        'info' => t('PathInfo URL Information'),
-        'weight' => 0,
-        'status' => 1,
-        'region' => 'header',
+      'info' => t('PathInfo URL Information'),
+      'weight' => 0,
+      'status' => 1,
+      'region' => 'header',
     );
-    
-    return $blocks;
 
-  }
-  else if ($op =='view') {
+    return $blocks;
+  } else if ($op == 'view') {
     switch ($delta) {
       case 0:
         $block = array(
           'subject' => t('Dog'),
           'content' => theme('infopane', pathinfo_detail()),
         );
-      break;
+        break;
     }
-    
+
     return $block;
   }
 }
@@ -60,10 +75,9 @@ function pathinfo_theme() {
     'infopane' => array(
       'variables' => array('pathinfo' => NULL),
       'template' => 'infopane'
-     )
+    )
   );
 }
-
 
 /**
  * Assemble a structured array that contains information about a given path.
@@ -90,7 +104,7 @@ function pathinfo_theme() {
  */
 function pathinfo_detail($path = NULL) {
   // If no path has been passed, get the path from the current URL
-  if ( $path == NULL ) {
+  if ($path == NULL) {
     $path = $_GET['q'];
     // If there is no path, we must be looking at the front page.
     if (drupal_is_front_page()) {
@@ -98,88 +112,48 @@ function pathinfo_detail($path = NULL) {
       $path = drupal_get_normal_path(variable_get('site_frontpage', 'node'));
     }
   }
-  
+
   // Check if the path is an alias.
   if (function_exists('path_help')) {
     $alias = drupal_get_path_alias($path);
   }
-  
+
   $info = array();
-  
+
   $info['menu'] = menu_get_item($path);
   // Get the module that contains the function that serves this page.
   $function = $info['menu']['page_callback'];
   $module = pathinfo_get_module_for_function($function);
-  
+
   $info['module_info'][$module] = array(
     'function' => $function,
-    'path' =>  realpath(drupal_get_path('module', $module)),
-  ); 
-  
+    'path' => realpath(drupal_get_path('module', $module)),
+  );
+
   // If this module provides extra info, let it add it.
-  $hook_function = $module .'_module_info';
+  $hook_function = $module . '_module_info';
   // Check that this function returns an array before adding it, 
   // otherwise we might get a fatal PHP error.
   if (function_exists($hook_function)) {
-    $module_info = call_user_func($module .'_module_info', $path); // Add any additional module info that hooks may want to provide.
+    $module_info = call_user_func($module . '_module_info', $path); // Add any additional module info that hooks may want to provide.
     if (is_array($module_info)) {
       $info['module_info'][$module] += $module_info;
     }
   }
-  
+
   // Save some general info that is useful for theming
-  $info['is_front_page'] = (bool)$front_page;
-  $info['alias'] = (string)$alias;
+  $info['is_front_page'] = (bool) $front_page;
+  $info['alias'] = (string) $alias;
   $info['path_requested'] = $path;
   $info['is_alias'] = $alias == $path ? TRUE : FALSE;
   dpm($info);
   return $info;
-  
+
   //$info['module']
-  
   // probably don't need module invoke all as we'll only ever be calling the
   // function for the module that implements this page view.
   //$module_info = module_invoke_all('module_info');
   //dpm($module_info);
-  
-}
-
-/**
- * Hack to implement module_info hook for common modules.
- */
-function pathinfo_module_info($info) {
-
-
-  $default_modules = array(
-    'views',
-    'content',
-    'node',
-  );
-
-  // Go through the module info hooks we implement.
-  // If they are implemented elsewhere, they will be called by module_invoke_all.
-  // otherwise use our defaults.
-  /*
-  foreach($default_modules as $module) {
-   $function = $module .'_module_info';
-   if(!function_exists($module .'_module_info')) {
-     $return[] = call_user_func($function);
-   }
-  }
-  */
-
-  return $return;
- 
-}
-
-function views_module_info() {
-  return 'views';
-}
-
-function node_module_info($path) {
-  //$nid = 'no'
-  return array('test' => 'test');
-  
 }
 
 /**
@@ -209,4 +183,74 @@ function pathinfo_get_module_for_function($function_name) {
   }
 
   return $implemented_in;
+}
+
+/**
+ * Menu callback.
+ */
+function pathinfo_detail_page() {
+  dpm($_REQUEST);
+  $form = drupal_get_form('pathinfo_lookup_form');
+  return $form;
+}
+
+/**
+ * Form implementation.
+ */
+function pathinfo_lookup_form() {
+  $form['path'] = array(
+    '#type' => 'textfield',
+    '#title' => t('path'),
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => 'Lookup',
+  );
+  
+  /**
+   * Pseudo logic incoming:
+   * - If first request and $_GET['path'] == false, show form
+   * - If form has been submitted, change $form['#redirect'] to array('admin/settings/pathinfo', 'path='. $GET['path']
+   * - If $_REQUEST['path'] is set in the page callback (above), render the results.
+   * 
+   * This structure should allow for easy AJAX and linking directly to pathinfo results pages.
+   */
+  
+  return $form;
+}
+
+/**
+ * Hack to implement module_info hook for common modules.
+ */
+function pathinfo_module_info($info) {
+
+
+  $default_modules = array(
+    'views',
+    'content',
+    'node',
+  );
+
+  // Go through the module info hooks we implement.
+  // If they are implemented elsewhere, they will be called by module_invoke_all.
+  // otherwise use our defaults.
+  /*
+    foreach($default_modules as $module) {
+    $function = $module .'_module_info';
+    if(!function_exists($module .'_module_info')) {
+    $return[] = call_user_func($function);
+    }
+    }
+   */
+
+  return $return;
+}
+
+function views_module_info() {
+  return 'views';
+}
+
+function node_module_info($path) {
+  //$nid = 'no'
+  return array('test' => 'test');
 }
