@@ -189,7 +189,6 @@ function pathinfo_get_module_for_function($function_name) {
  * Menu callback.
  */
 function pathinfo_detail_page() {
-  dpm($_REQUEST);
   $form = drupal_get_form('pathinfo_lookup_form');
   return $form;
 }
@@ -197,7 +196,8 @@ function pathinfo_detail_page() {
 /**
  * Form implementation.
  */
-function pathinfo_lookup_form() {
+function pathinfo_lookup_form($form_state) {
+  dpm($form_state);
   $form['path'] = array(
     '#type' => 'textfield',
     '#title' => t('path'),
@@ -206,6 +206,8 @@ function pathinfo_lookup_form() {
     '#type' => 'submit',
     '#value' => 'Lookup',
   );
+  
+  
   
   /**
    * Pseudo logic incoming:
@@ -217,6 +219,13 @@ function pathinfo_lookup_form() {
    */
   
   return $form;
+}
+
+/**
+ * Form submit hook.
+ */
+function pathinfo_lookup_form_submit($form, &$form_state) {
+  
 }
 
 /**
