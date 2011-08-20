@@ -25,6 +25,15 @@ function pathinfo_menu() {
     'access arguments' => array('access path info'),
     'type' => MENU_NORMAL_ITEM,
   );
+  
+  $items['admin/settings/pathinfo/ajax'] = array(
+    'title' => t('Path Info'),
+    'description' => t('AJAX Callback, not intended to be browsed directly'),
+    'page callback' => 'pathinfo_detail_ajax',
+    'access callback' => 'user_access',
+    'access arguments' => array('access path info'),
+    'type' => MENU_CALLBACK,
+  );
 
 
   return $items;
@@ -34,7 +43,7 @@ function pathinfo_menu() {
  * Implementation of hook_init().
  */
 function pathinfo_init() {
-  drupal_add_js(drupal_get_path('module', 'pathinfo') .'/pathinfo.js', 'module');
+  drupal_add_js(drupal_get_path('module', 'pathinfo') .'/pathinfo.js', 'module', 'header', FALSE, FALSE, FALSE);
 }
 
 /**
@@ -111,6 +120,7 @@ function pathinfo_theme() {
  */
 function pathinfo_detail($path = NULL) {
   dpm('pathinfo_detail called');
+  /*
   // If no path has been passed, get the path from the current URL
   if ($path == NULL) {
     $path = $_GET['q'];
@@ -119,6 +129,10 @@ function pathinfo_detail($path = NULL) {
       $front_page = TRUE;
       $path = drupal_get_normal_path(variable_get('site_frontpage', 'node'));
     }
+  }
+  */
+  if (!isset($path)) {
+    return t('Nothing found for %path', array('%path' => $path));
   }
 
   // Check if the path is an alias.
@@ -203,6 +217,16 @@ function pathinfo_detail_page() {
 }
 
 /**
+ * Menu callback
+ */
+function pathinfo_detail_ajax($path) {
+  $data = 'ajax path:'. $path;
+  $output = theme('infopane', pathinfo_detail($path));
+  
+  drupal_json(array('status' => 0, 'data' => $output));
+}
+
+/**
  * Form implementation.
  */
 function pathinfo_lookup_form($form_state) {
@@ -228,7 +252,9 @@ function pathinfo_lookup_form($form_state) {
    * This structure should allow for easy AJAX and linking directly to pathinfo results pages.
    */
   $form['results'] = array (
+    '#prefix' => '<div id="pathinfo-result">',
     '#value' => $form_state['storage']['results'],
+    '#suffix' => '</div>',
   );
   
   
@@ -240,7 +266,16 @@ function pathinfo_lookup_form($form_state) {
  */
 function pathinfo_lookup_form_submit($form, &$form_state) {
   $path = $form_state['state']['values']['path'];
-  $form_state['storage']['results'] = theme('infopath', pathinfo_detail($path));
+  $pathinfo = pathinfo_detail($path);
+
+  if (is_array($pathinfo)) {
+    $output = theme('infopane', $pathinfo);
+  } else {
+    $output = $pathinfo;
+  }
+
+  $form_state['storage']['results'] = $output;
+  
 }
 
 /**
