@@ -5,8 +5,10 @@
  * Available variables:
  * 
  */
-dpm($infopane);
-dpm($variables['infopane']);
+dpm($pathinfo, 'theme_function');
+dpm(get_defined_vars(), 'theme_function');
+
+dpm($variables['pathinfo'], 'theme_function');
 
 
 ?>

@@ -31,6 +31,13 @@ function pathinfo_menu() {
 }
 
 /**
+ * Implementation of hook_init().
+ */
+function pathinfo_init() {
+  drupal_add_js(drupal_get_path('module', 'pathinfo') .'/pathinfo.js', 'module');
+}
+
+/**
  * Implementation of hook_perm().
  */
 function pathinfo_perm() {
@@ -73,7 +80,7 @@ function pathinfo_block($op = 'list', $delta = 0, $edit = array()) {
 function pathinfo_theme() {
   return array(
     'infopane' => array(
-      'variables' => array('pathinfo' => NULL),
+      'arguments' => array('pathinfo' => NULL),
       'template' => 'infopane'
     )
   );
@@ -103,6 +110,7 @@ function pathinfo_theme() {
  * 
  */
 function pathinfo_detail($path = NULL) {
+  dpm('pathinfo_detail called');
   // If no path has been passed, get the path from the current URL
   if ($path == NULL) {
     $path = $_GET['q'];
@@ -146,7 +154,7 @@ function pathinfo_detail($path = NULL) {
   $info['alias'] = (string) $alias;
   $info['path_requested'] = $path;
   $info['is_alias'] = $alias == $path ? TRUE : FALSE;
-  dpm($info);
+  dpm($info, 'pathinfo_detail');
   return $info;
 
   //$info['module']
@@ -190,6 +198,7 @@ function pathinfo_get_module_for_function($function_name) {
  */
 function pathinfo_detail_page() {
   $form = drupal_get_form('pathinfo_lookup_form');
+  //$results = _show_results();
   return $form;
 }
 
@@ -197,10 +206,11 @@ function pathinfo_detail_page() {
  * Form implementation.
  */
 function pathinfo_lookup_form($form_state) {
-  dpm($form_state);
+  dpm($form_state, 'form state');
   $form['path'] = array(
     '#type' => 'textfield',
     '#title' => t('path'),
+    '#default_value' => $form_state['values']['path'],
   );
   $form['submit'] = array(
     '#type' => 'submit',
@@ -217,6 +227,10 @@ function pathinfo_lookup_form($form_state) {
    * 
    * This structure should allow for easy AJAX and linking directly to pathinfo results pages.
    */
+  $form['results'] = array (
+    '#value' => $form_state['storage']['results'],
+  );
+  
   
   return $form;
 }
@@ -225,7 +239,8 @@ function pathinfo_lookup_form($form_state) {
  * Form submit hook.
  */
 function pathinfo_lookup_form_submit($form, &$form_state) {
-  
+  $path = $form_state['state']['values']['path'];
+  $form_state['storage']['results'] = theme('infopath', pathinfo_detail($path));
 }
 
 /**
