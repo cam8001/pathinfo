@@ -91,7 +91,11 @@ function pathinfo_theme() {
     'infopane' => array(
       'arguments' => array('pathinfo' => NULL),
       'template' => 'infopane'
-    )
+     ),
+    'module_info' => array (
+      'arguments' => array('module_info' => NULL),
+      'template' => 'module_info',     
+    ),
   );
 }
 
@@ -119,7 +123,10 @@ function pathinfo_theme() {
  * 
  */
 function pathinfo_detail($path = NULL) {
-  dpm('pathinfo_detail called');
+  dpm($path);
+  // If a full path has been passed, strip off the junk
+   
+  //dpm('pathinfo_detail called');
   /*
   // If no path has been passed, get the path from the current URL
   if ($path == NULL) {
@@ -133,6 +140,11 @@ function pathinfo_detail($path = NULL) {
   */
   if (!isset($path)) {
     return t('Nothing found for %path', array('%path' => $path));
+  }
+  
+  if (strpos($path, $_SERVER['HTTP_HOST']) !== FALSE) {
+    // strip the leading slash
+    $path = ltrim(parse_url($path, PHP_URL_PATH), '/');
   }
 
   // Check if the path is an alias.
@@ -149,8 +161,9 @@ function pathinfo_detail($path = NULL) {
 
   $info['module_info'][$module] = array(
     'function' => $function,
+    'module' => $module,
     'path' => realpath(drupal_get_path('module', $module)),
-  );
+  ) + drupal_parse_info_file(drupal_get_path('module', $module) .'/'. $module .'.info');
 
   // If this module provides extra info, let it add it.
   $hook_function = $module . '_module_info';
@@ -168,14 +181,14 @@ function pathinfo_detail($path = NULL) {
   $info['alias'] = (string) $alias;
   $info['path_requested'] = $path;
   $info['is_alias'] = $alias == $path ? TRUE : FALSE;
-  dpm($info, 'pathinfo_detail');
+  //dpm($info, 'pathinfo_detail');
   return $info;
 
   //$info['module']
   // probably don't need module invoke all as we'll only ever be calling the
   // function for the module that implements this page view.
   //$module_info = module_invoke_all('module_info');
-  //dpm($module_info);
+  ////dpm($module_info);
 }
 
 /**
@@ -196,7 +209,7 @@ function pathinfo_get_module_for_function($function_name) {
   $modules = module_list();
   // Go through all loaded modules
   foreach ($modules as $module) {
-    //dpm(strstr($function_name, $module), 'strstr');
+    ////dpm(strstr($function_name, $module), 'strstr');
     if (strstr($function_name, $module)) {
       if (strlen($module) > strlen($implemented_in)) {
         $implemented_in = $module;
@@ -217,10 +230,15 @@ function pathinfo_detail_page() {
 }
 
 /**
- * Menu callback
+ * Menu callback.
+ * 
+ * Get the URL from GET variables, so that we can pass deep paths without
+ * confusing the menu arguments system
+ * 
  */
-function pathinfo_detail_ajax($path) {
-  $data = 'ajax path:'. $path;
+function pathinfo_detail_ajax() {
+  // @todo think about security implications, there may be be better way of passing the path
+  $path = $_REQUEST['path'];
   $output = theme('infopane', pathinfo_detail($path));
   
   drupal_json(array('status' => 0, 'data' => $output));
@@ -230,7 +248,7 @@ function pathinfo_detail_ajax($path) {
  * Form implementation.
  */
 function pathinfo_lookup_form($form_state) {
-  dpm($form_state, 'form state');
+  //dpm($form_state, 'form state');
   $form['path'] = array(
     '#type' => 'textfield',
     '#title' => t('path'),
