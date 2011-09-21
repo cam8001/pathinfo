@@ -23,8 +23,6 @@ function pathinfo_menu() {
 /**
  * Implementation of hook_block().
  *
- * @param <type> $node
- * @return <type>
  */
 function pathinfo_block($op = 'list', $delta = 0, $edit = array()) {
   if ($op == 'list') {
@@ -105,8 +103,8 @@ function pathinfo_detail($path = NULL) {
   }
   
   $info = array();
-  
-  $info['menu'] = menu_get_item($path);
+  $info['system_path'] = drupal_get_normal_path($path);
+  $info['menu'] = menu_get_item($info['system_path']);
   // Get the module that contains the function that serves this page.
   $function = $info['menu']['page_callback'];
   $module = pathinfo_get_module_for_function($function);
