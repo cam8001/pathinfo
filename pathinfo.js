@@ -1,7 +1,8 @@
 Drupal.behaviors.pathinfo = function(context) {
   // Catch the submit action of the main form (at admin/settings/pathinfo)
-  
-  $('dogform#pathinfo-lookup-form', context).submit(function(){
+  $form = $('form#pathinfo-lookup-form', context);
+   
+  $($form).submit(function(){
     var path = $('input[name=path]', this).val();
     // need to encode this url 
     var url = Drupal.settings.basePath + 'admin/settings/pathinfo/ajax/' + '?path=' + encodeURI(path);

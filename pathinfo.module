@@ -124,10 +124,6 @@ function pathinfo_detail($path = NULL) {
     }
   }
   */
-  if (!isset($path)) {
-    return t('Nothing found for %path', array('%path' => $path));
-  }
-  
   if (strpos($path, $_SERVER['HTTP_HOST']) !== FALSE) {
     // strip the leading slash
     $path = ltrim(parse_url($path, PHP_URL_PATH), '/');
@@ -141,7 +137,12 @@ function pathinfo_detail($path = NULL) {
   $info = array();
 
   $info['system_path'] = drupal_get_normal_path($path);
-  $info['menu'] = menu_get_item($info['system_path']);
+  $menu = menu_get_item($info['system_path']);
+  if ($menu) {
+    $info['menu'] = $menu;
+  } else {
+    return t('Nothing found for %path', array('%path' => $path));
+  }
   
   // Get the module that contains the function that serves this page.
   $function = $info['menu']['page_callback'];
@@ -156,10 +157,6 @@ function pathinfo_detail($path = NULL) {
   
 
   $info['module_info'][$module] = array(
-    /*
-    'function' => $function,
-    'arguments' => implode(', ', $info['menu']['page_arguments']),
-     */
     'function' => format_function_call($function, $info['menu']['page_arguments']),
     'module' => $module,
     'path' => realpath(drupal_get_path('module', $module)),
@@ -182,10 +179,9 @@ function pathinfo_detail($path = NULL) {
   $info['alias'] = (string) $alias;
   $info['path_requested'] = $path;
   $info['is_alias'] = $alias == $path ? TRUE : FALSE;
-  dpm($info, 'pathinfo_detail');
+  
   return $info;
 
-  //$info['module']
   // probably don't need module invoke all as we'll only ever be calling the
   // function for the module that implements this page view.
   //$module_info = module_invoke_all('module_info');
@@ -240,7 +236,12 @@ function pathinfo_detail_page() {
 function pathinfo_detail_ajax() {
   // @todo think about security implications, there may be be better way of passing the path
   $path = $_REQUEST['path'];
-  $output = theme('infopane', pathinfo_detail($path));
+  $pathinfo = pathinfo_detail($path);
+  if (is_array($pathinfo)) {
+    $output = theme('infopane', $pathinfo);
+  } else {
+    $output = $pathinfo;
+  }
   
   drupal_json(array('status' => 0, 'data' => $output));
 }
@@ -260,8 +261,6 @@ function pathinfo_lookup_form($form_state) {
     '#value' => 'Lookup',
   );
   
-  
-  
   /**
    * Pseudo logic incoming:
    * - If first request and $_GET['path'] == false, show form
@@ -277,8 +276,6 @@ function pathinfo_lookup_form($form_state) {
     '#suffix' => '</div>',
     '#type' => 'markup'
   );
-  dpm($form);
-  
   
   return $form;
 }
@@ -300,6 +297,8 @@ function format_function_call($function, $arguments) {
 function pathinfo_lookup_form_submit($form, &$form_state) {
   $path = $form_state['values']['path'];
   $pathinfo = pathinfo_detail($path);
+  
+  dpm($pathinfo);
 
   if (is_array($pathinfo)) {
     $output = theme('infopane', $pathinfo);

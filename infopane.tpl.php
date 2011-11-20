@@ -23,7 +23,6 @@ foreach($variables['pathinfo']['module_info'] as $key=>$value) {
 
 ?>
 <div id="pathinfo-infopane">
-  
   <h2>Path: <?php echo $pathinfo['menu']['path']?></h2>
   <?php
     echo theme('module_info', current($pathinfo['module_info']));
