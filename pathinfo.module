@@ -5,18 +5,7 @@
  */
 function pathinfo_menu() {
   $items = array();
-
-  // Add a tab to node view pages
-  $items['node/%node/pathinfo'] = array(
-    'title' => t('Path Info'),
-    'page callback' => 'pathinfo_detail_page',
-    'page arguments' => array(1, 'node'),
-    'access callback' => 'user_access',
-    'access arguments' => array('access path info'),
-    'type' => MENU_LOCAL_TASK,
-    'weight' => 100,
-  );
-
+  
   $items['admin/settings/pathinfo'] = array(
     'title' => t('Path Info'),
     'description' => t('For a given path, view which module implements it, and other data.'),
@@ -121,7 +110,6 @@ function pathinfo_theme() {
  * 
  */
 function pathinfo_detail($path = NULL) {
-  dpm($path);
   // If a full path has been passed, strip off the junk
    
   //dpm('pathinfo_detail called');
@@ -144,7 +132,7 @@ function pathinfo_detail($path = NULL) {
     // strip the leading slash
     $path = ltrim(parse_url($path, PHP_URL_PATH), '/');
   }
-
+  
   // Check if the path is an alias.
   if (function_exists('path_help')) {
     $alias = drupal_get_path_alias($path);
@@ -157,12 +145,25 @@ function pathinfo_detail($path = NULL) {
   
   // Get the module that contains the function that serves this page.
   $function = $info['menu']['page_callback'];
+  // Special case for drupal_get_form calls
+  if ($function == 'drupal_get_form') {
+    $info['is_form'] = TRUE;
+    $function = $info['menu']['page_arguments'][0];
+  }
+  
+  
   $module = pathinfo_get_module_for_function($function);
+  
 
   $info['module_info'][$module] = array(
+    /*
     'function' => $function,
+    'arguments' => implode(', ', $info['menu']['page_arguments']),
+     */
+    'function' => format_function_call($function, $info['menu']['page_arguments']),
     'module' => $module,
     'path' => realpath(drupal_get_path('module', $module)),
+    
   ) + drupal_parse_info_file(drupal_get_path('module', $module) .'/'. $module .'.info');
 
   // If this module provides extra info, let it add it.
@@ -181,7 +182,7 @@ function pathinfo_detail($path = NULL) {
   $info['alias'] = (string) $alias;
   $info['path_requested'] = $path;
   $info['is_alias'] = $alias == $path ? TRUE : FALSE;
-  //dpm($info, 'pathinfo_detail');
+  dpm($info, 'pathinfo_detail');
   return $info;
 
   //$info['module']
@@ -271,19 +272,33 @@ function pathinfo_lookup_form($form_state) {
    */
   $form['results'] = array (
     '#prefix' => '<div id="pathinfo-result">',
-    '#value' => $form_state['storage']['results'],
+    // concatenate a blank string to ensure the form api renders this element
+    '#value' => $form_state['storage']['results'] .' ',
     '#suffix' => '</div>',
+    '#type' => 'markup'
   );
+  dpm($form);
   
   
   return $form;
 }
 
+function format_function_call($function, $arguments) {
+  foreach($arguments as &$argument) {
+    if (is_int($argument)) {
+      continue;
+    }
+    $argument = "'". $argument ."'";
+  }
+  return $function .'('. implode($arguments, ', ') . ');';
+}
+
+
 /**
  * Form submit hook.
  */
 function pathinfo_lookup_form_submit($form, &$form_state) {
-  $path = $form_state['state']['values']['path'];
+  $path = $form_state['values']['path'];
   $pathinfo = pathinfo_detail($path);
 
   if (is_array($pathinfo)) {

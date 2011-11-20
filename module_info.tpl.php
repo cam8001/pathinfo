@@ -2,6 +2,9 @@
 <div>
   <?php
     foreach($module_info as $key=>$value){
+      if (is_array($value)) {
+        $value = implode(', ', $value);
+      }
       $items[] = t('%label: @value', array('%label' => $key, '@value' => $value));
     }
     echo theme('item_list', $items);

@@ -29,7 +29,7 @@ foreach($variables['pathinfo']['module_info'] as $key=>$value) {
     echo theme('module_info', current($pathinfo['module_info']));
   ?>
   <pre>
-  <?php print_r($pathinfo); ?>
+  <?php// print_r($pathinfo); ?>
   </pre>
   <?php
     //echo theme('item_list', $menu_items);
