@@ -33,6 +33,11 @@ function pathinfo_menu() {
  */
 function pathinfo_init() {
   drupal_add_js(drupal_get_path('module', 'pathinfo') .'/pathinfo.js', 'module', 'header', FALSE, FALSE, FALSE);
+  
+}
+
+function pathinfo_include_plugins() {
+
 }
 
 /**
@@ -111,7 +116,7 @@ function pathinfo_theme() {
  */
 function pathinfo_detail($path = NULL) {
   // If a full path has been passed, strip off the junk
-   
+      
   //dpm('pathinfo_detail called');
   /*
   // If no path has been passed, get the path from the current URL
