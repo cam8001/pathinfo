@@ -7,21 +7,21 @@
 /**
  * Form constructor.
  */
-function pathinfo_config_form(&$form, $form_state) {
-  
-  $form = array(
-    '#tree' => TRUE,
+function pathinfo_config_form($form, &$form_state) {
+ 
+  $form['pathinfo_footer_display'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Show Path Info details in page footer.'),
+    '#default_value' => variable_get('pathinfo_footer_display', FALSE)
   );
 
-  $form['show_pathinfo'] = array(
-    '#type' => 'checkbox',
-    '#title' => 
-  );
+  $t_arguments = array('!drupalcontrib' => l('DrupalContrib', 'http://drupalcontrib.org/', array('external' => TRUE)));
 
-  $form['link_functions'] = array(
+  $form['pathinfo_link_functions'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Link functions to their documentation on ')
-  )
+    '#title' => t('Link functions to their documentation on !drupalcontrib', $t_arguments),
+    '#default_value' => variable_get('pathinfo_link_functions', FALSE),
+  );
 
   return system_settings_form($form);
 }
