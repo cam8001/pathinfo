@@ -1,3 +1,5 @@
-name = PathInfo
-description = Inspect Drupal URLs and see which module implements them.
-core = 7.x
+name = "PathInfo"
+package = "Development"
+core = "7.x"
+version = "7.x-dev"
+
