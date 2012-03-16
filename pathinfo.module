@@ -1,7 +1,9 @@
 <?php
 
 function pathinfo_init() {
-  drupal_register_shutdown_function('pathinfo_shutdown');
+  if (!devel_silent() && variable_get('pathinfo_footer_display', FALSE)) {
+    drupal_register_shutdown_function('pathinfo_shutdown');
+  }
 }
 
 /**
