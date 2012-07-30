@@ -2,6 +2,7 @@
 
 function pathinfo_init() {
   if (!devel_silent() && variable_get('pathinfo_footer_display', FALSE)) {
+    drupal_add_css(drupal_get_path('module', 'pathinfo') . '/pathinfo.css');
     drupal_register_shutdown_function('pathinfo_shutdown');
   }
 }
@@ -22,7 +23,7 @@ function pathinfo_menu() {
   );
 
   $items['admin/config/pathinfo/config'] = array(
-    'title' => 'Configure PathInfo settings.',
+    'title' => 'Configure PathInfo settings',
     'position' => 'right',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('pathinfo_config_form'),
@@ -88,8 +89,9 @@ function pathinfo_served_by() {
   }
   $message .= ', implemented by @module in @implemented_in at line with arguments: @arguments';
 
-  $output = t($message, $t_arguments);
-  return '<div class="dev-query">' . $output . '</div>';
+
+  $output = t_safe($message, $t_arguments);
+  return '<div class="pathinfo pathinfo-served-by">' . $output . '</div>';
 }
 
 function pathinfo_get_current_path() {

@@ -1,0 +1,10 @@
+/**
+ * Query summary
+ */
+div.pathinfo {
+  font-size: 11px;
+  background: #fff;
+  border-top: 3px solid #ccc;
+  color: #333;
+  padding: 1em;
+ }
