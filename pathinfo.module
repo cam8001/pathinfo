@@ -53,6 +53,18 @@ function pathinfo_permission() {
 }
 
 function pathinfo_shutdown() {
+  // Try not to break non html pages.
+  if (function_exists('drupal_get_http_header')) {
+    $header = drupal_get_http_header('content-type');
+    if ($header) {
+      $formats = array('xml', 'javascript', 'json', 'plain', 'image', 'application', 'csv', 'x-comma-separated-values');
+      foreach ($formats as $format) {
+        if (strstr($header, $format)) {
+          return;
+        }
+      }
+    }
+  }
   print pathinfo_served_by();
 }
 
