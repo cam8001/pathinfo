@@ -1,5 +1,12 @@
 <?php
+/**
+ * @file
+ * Hooks and core functions for the pathinfo module.
+ */
 
+/**
+ * Implements hook_init().
+ */
 function pathinfo_init() {
   if (!devel_silent() && variable_get('pathinfo_footer_display', FALSE)) {
     drupal_add_css(drupal_get_path('module', 'pathinfo') . '/pathinfo.css');
@@ -31,10 +38,7 @@ function pathinfo_menu() {
     'file' => 'pathinfo.admin.inc',
     'weight' => 3,
   );
-
-
-
-
+  
   return $items;
 }
 
@@ -52,24 +56,55 @@ function pathinfo_permission() {
   );
 }
 
-function pathinfo_shutdown() {
-  // Try not to break non html pages.
-  if (function_exists('drupal_get_http_header')) {
-    $header = drupal_get_http_header('content-type');
-    if ($header) {
-      $formats = array('xml', 'javascript', 'json', 'plain', 'image', 'application', 'csv', 'x-comma-separated-values');
-      foreach ($formats as $format) {
-        if (strstr($header, $format)) {
-          return;
-        }
-      }
-    }
-  }
-  print pathinfo_served_by();
+/**
+ * Implements hook_theme().
+ */
+function pathinfo_theme() {
+  return array(
+    'pathinfo_served_by' => array(
+      'variables' => array(
+        'path' => NULL,
+        'function' => NULL,
+        'arguments' => NULL,
+        'module' => NULL,
+        'implemented_in' => NULL,
+        'line' => NULL,
+      ),
+      'file' => 'pathinfo.theme.inc',
+    )
+  );
 }
 
-function pathinfo_served_by() {
-  $path = current_path();
+/**
+ * Shutdown callback.
+ */
+function pathinfo_shutdown() {
+  // Try not to break non html pages.
+  if (pathinfo_html_page()) {
+    print pathinfo_served_by(pathinfo_get_info());
+  }
+}
+
+function pathinfo_served_by($pathinfo) {
+  return theme('pathinfo_served_by', $pathinfo);
+}
+
+/**
+ * Get info about a supplied path, or the current path if none supplied.
+ * 
+ * @return array
+ *  An associative array containing the path info:
+ *   - path: System path to url.
+ *   - function: The function that serves the path.
+ *   - arguments: Any arguments passed to the function that serves the path.
+ *   - module: The module that contains the function.
+ *   - implemented_in: The file that contains the function.
+ *   - line: The line the function is implemented on.
+ */
+function pathinfo_get_info($path = NULL) {
+  if ($path == NULL) {
+    $path = current_path();
+  }
   $menu = menu_get_item($path);
   $arguments = array_map('check_plain', $menu['page_arguments']);
   $arguments = implode(',', $arguments);
@@ -87,25 +122,27 @@ function pathinfo_served_by() {
   $implemented_in = $reflection->getFileName();
   $line = $reflection->getStartLine();
 
-  $t_arguments = array(
-    '@path' => $path,
-    '@function' => $function,
-    '@arguments' => $arguments,
-    '@module' => $module,
-    '@implemented_in' => $implemented_in,
-    '@line' => $line,
+
+  return array(
+    'path' => $path,
+    'function' => $function,
+    'arguments' => $arguments,
+    'module' => $module,
+    'implemented_in' => $implemented_in,
+    'line' => $line,
+    'is_form' => TRUE,
   );
-  $message = '@path is served by @function';
-  if ($is_form) {
-    $message .= ' (form definition)';
-  }
-  $message .= ', implemented by @module in @implemented_in at line with arguments: @arguments';
 
-
-  $output = t_safe($message, $t_arguments);
-  return '<div class="pathinfo pathinfo-served-by">' . $output . '</div>';
 }
 
+/**
+ * Returns the system url of the current page.
+ *
+ * @return string
+ *   The path string (eg node/306).
+ *
+ * @see current_path()
+ */
 function pathinfo_get_current_path() {
   return current_path();
 }
@@ -113,18 +150,17 @@ function pathinfo_get_current_path() {
 /**
  * Given a function name, return the module that it appears in.
  *
- *
  * @param string $function_name
  *   Name of the function you'd like to cehck.
  * @return string
  *   The module name, or an empty string if not found.
  *
- * @todo test with modules with overlapping names, eg node and node_dog. Just have to
- * find some good test cases.
+ * @todo test with modules with overlapping names, eg node and node_dog. Just
+ * have to find some good test cases.
  *
- * @todo It seems that module_list() is very fast (use static cache), and we can call
- * it many times per request without a meaningful perfomance impact. However, it
- * is worth monitoring for performance issues.
+ * @todo It seems that module_list() is very fast (use static cache), and we can
+ * call it many times per request without a meaningful perfomance impact.
+ * However, it is worth monitoring for performance issues.
  */
 function pathinfo_get_module_for_function($function_name) {
   $implemented_in = '';
@@ -140,4 +176,28 @@ function pathinfo_get_module_for_function($function_name) {
   }
 
   return $implemented_in;
+}
+
+/**
+ * Detects whether a page request delivers HTML or not.
+ *
+ * @return bool
+ *   TRUE for HTML page requests, FALSE otherwise.
+ * 
+ * @see devel_shutdown_real()
+ */
+function pathinfo_html_page() {
+  if (function_exists('drupal_get_http_header')) {
+    $header = drupal_get_http_header('content-type');
+    if ($header) {
+      $formats = array('xml', 'javascript', 'json', 'plain', 'image', 'application', 'csv', 'x-comma-separated-values');
+      foreach ($formats as $format) {
+        if (strstr($header, $format)) {
+          return FALSE;
+        }
+      }
+    }
+  }
+
+  return TRUE;
 }
