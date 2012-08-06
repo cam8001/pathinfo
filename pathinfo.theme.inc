@@ -11,7 +11,7 @@
  *   An associative array containing:
  *   - path: System path to url.
  *   - function: The function that serves the path.
- *   - arguments: Any arguments passed to the function that serves the path.
+ *   - arguments: Array of arguments passed to the function serving the path.
  *   - module: The module that contains the function.
  *   - filepath: Relative ath to the file that implements the function.
  *   - filepath_full: The full path to the file that contains the function.
@@ -35,7 +35,7 @@ function theme_pathinfo_served_by($variables) {
   $t_arguments = array(
     '@path' => $variables['path'],
     '!function' => $function,
-    '@arguments' => $variables['arguments'],
+    '@arguments' => implode(',', $variables['arguments']),
     '@module' => $variables['module'],
     '@implemented_in' => $variables['filepath_full'],
     '@line' => $variables['line'],
@@ -44,7 +44,10 @@ function theme_pathinfo_served_by($variables) {
   if ($variables['is_form']) {
     $message .= ' (form definition)';
   }
-  $message .= ', implemented by @module in @implemented_in at line with arguments: @arguments';
+  $message .= ', implemented by @module in @implemented_in at line @line';
+  if ($variables['arguments']) {
+    $message .= ' with arguments: @arguments';
+  }
 
   $message = t_safe($message, $t_arguments);
   $output = '<div class="pathinfo pathinfo-served-by">';

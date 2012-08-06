@@ -127,20 +127,21 @@ function pathinfo_served_by($pathinfo) {
  *   - is_core: Whether or not this module is in Drupal core.
  */
 function pathinfo_get_info($path = NULL) {
-  dd('Called by: '.  maya_updates_api_calling_function());
-
   if ($path == NULL) {
     $path = current_path();
   }
   $menu = menu_get_item($path);
   $arguments = array_map('check_plain', $menu['page_arguments']);
-  $arguments = implode(',', $arguments);
+  $arguments = $arguments;
   $function = $menu['page_callback'];
   $is_form = FALSE;
   // Get the module this callback is implemented in.
   if ($function == 'drupal_get_form') {
-    $function = $menu['page_arguments'][0];
+    // Form definitions are always served by drupal_get_form, so the first
+    // argument that defines the form is much more useful.
+    $function = $arguments[0];
     $is_form = TRUE;
+    unset($arguments[0]);
   }
   $module = pathinfo_get_module_for_function($function);
 
