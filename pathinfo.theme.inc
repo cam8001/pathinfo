@@ -51,7 +51,7 @@ function theme_pathinfo_served_by($variables) {
 
   $message = t_safe($message, $t_arguments);
   $output = '<div class="pathinfo pathinfo-served-by">';
-  $output .= l(t('PathInfo: '), 'admin/config/pathinfo');
+  $output .= l(t('PathInfo: '), 'admin/config/pathinfo/config');
   $output .= $message;
   $output .= '</div>';
 
