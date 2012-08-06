@@ -38,7 +38,7 @@ function pathinfo_menu() {
     'file' => 'pathinfo.admin.inc',
     'weight' => 3,
   );
-  
+
   return $items;
 }
 
@@ -51,8 +51,8 @@ function pathinfo_permission() {
       'title' => t('Administer pathinfo settings.'),
     ),
     'access pathinfo' => array(
-      'title' => t('View pathinfo details in footer.')
-    )
+      'title' => t('View pathinfo details in footer.'),
+    ),
   );
 }
 
@@ -71,7 +71,7 @@ function pathinfo_theme() {
         'line' => NULL,
       ),
       'file' => 'pathinfo.theme.inc',
-    )
+    ),
   );
 }
 
@@ -85,15 +85,27 @@ function pathinfo_shutdown() {
   }
 }
 
+/**
+ * Callback to show
+ *
+ * @param array $pathinfo
+ *   Path information, in format defined by pathinfo_get_info().
+ *
+ * @return string
+ *   HTML string describing path.
+ *
+ * @see pathinfo_get_info()
+ * @see theme_pathinfo_served_by()
+ */
 function pathinfo_served_by($pathinfo) {
   return theme('pathinfo_served_by', $pathinfo);
 }
 
 /**
  * Get info about a supplied path, or the current path if none supplied.
- * 
+ *
  * @return array
- *  An associative array containing the path info:
+ *   An associative array containing the path info:
  *   - path: System path to url.
  *   - function: The function that serves the path.
  *   - arguments: Any arguments passed to the function that serves the path.
@@ -148,10 +160,12 @@ function pathinfo_get_current_path() {
 }
 
 /**
- * Given a function name, return the module that it appears in.
+ * Given a function name, return the module that it appears in. This will
+ * only work for functions that have the module name in them.
  *
  * @param string $function_name
  *   Name of the function you'd like to cehck.
+ *
  * @return string
  *   The module name, or an empty string if not found.
  *
@@ -165,9 +179,8 @@ function pathinfo_get_current_path() {
 function pathinfo_get_module_for_function($function_name) {
   $implemented_in = '';
   $modules = module_list();
-  // Go through all loaded modules
+  // Go through all loaded modules.
   foreach ($modules as $module) {
-    ////dpm(strstr($function_name, $module), 'strstr');
     if (strstr($function_name, $module)) {
       if (strlen($module) > strlen($implemented_in)) {
         $implemented_in = $module;
@@ -183,7 +196,7 @@ function pathinfo_get_module_for_function($function_name) {
  *
  * @return bool
  *   TRUE for HTML page requests, FALSE otherwise.
- * 
+ *
  * @see devel_shutdown_real()
  */
 function pathinfo_html_page() {
