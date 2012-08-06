@@ -8,7 +8,7 @@
  * Implements hook_init().
  */
 function pathinfo_init() {
-  if (!devel_silent() && variable_get('pathinfo_footer_display', TRUE)) {
+  if (user_access('view pathinfo') && !devel_silent() && variable_get('pathinfo_footer_display', TRUE)) {
     drupal_add_css(drupal_get_path('module', 'pathinfo') . '/pathinfo.css');
     drupal_register_shutdown_function('pathinfo_shutdown');
   }
@@ -50,7 +50,7 @@ function pathinfo_permission() {
     'administer pathinfo' => array(
       'title' => t('Administer pathinfo settings.'),
     ),
-    'access pathinfo' => array(
+    'view pathinfo' => array(
       'title' => t('View pathinfo details in footer.'),
     ),
   );
