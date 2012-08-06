@@ -4,3 +4,4 @@ description = "Shows information about url paths and which module they are provi
 core = "7.x"
 
 dependencies[] = devel
+configure = admin/config/pathinfo/config
