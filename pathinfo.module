@@ -8,7 +8,7 @@
  * Implements hook_init().
  */
 function pathinfo_init() {
-  if (!devel_silent() && variable_get('pathinfo_footer_display', FALSE)) {
+  if (!devel_silent() && variable_get('pathinfo_footer_display', TRUE)) {
     drupal_add_css(drupal_get_path('module', 'pathinfo') . '/pathinfo.css');
     drupal_register_shutdown_function('pathinfo_shutdown');
   }
@@ -67,8 +67,18 @@ function pathinfo_theme() {
         'function' => NULL,
         'arguments' => NULL,
         'module' => NULL,
-        'implemented_in' => NULL,
+        'filepath' => NULL,
+        'filepath_full' => NULL,
         'line' => NULL,
+        'is_form' => NULL,
+        'is_core' => NULL,
+      ),
+      'file' => 'pathinfo.theme.inc',
+    ),
+    'pathinfo_core_api_link' => array(
+      'variables' => array(
+        'function' => NULL,
+        'filepath' => NULL,
       ),
       'file' => 'pathinfo.theme.inc',
     ),
@@ -110,10 +120,15 @@ function pathinfo_served_by($pathinfo) {
  *   - function: The function that serves the path.
  *   - arguments: Any arguments passed to the function that serves the path.
  *   - module: The module that contains the function.
- *   - implemented_in: The file that contains the function.
+ *   - filepath: Relative ath to the file that implements the function.
+ *   - filepath_full: The full path to the file that contains the function.
  *   - line: The line the function is implemented on.
+ *   - is_form: Whether or not the function is a form constructor.
+ *   - is_core: Whether or not this module is in Drupal core.
  */
 function pathinfo_get_info($path = NULL) {
+  dd('Called by: '.  maya_updates_api_calling_function());
+
   if ($path == NULL) {
     $path = current_path();
   }
@@ -131,18 +146,22 @@ function pathinfo_get_info($path = NULL) {
 
   // Find the file this function is in.
   $reflection = new ReflectionFunction($function);
-  $implemented_in = $reflection->getFileName();
+  $filepath_full = $reflection->getFileName();
   $line = $reflection->getStartLine();
 
+  $is_core = pathinfo_module_is_core($module);
+  $filepath = pathinfo_get_relative_path($filepath_full);
 
   return array(
     'path' => $path,
     'function' => $function,
     'arguments' => $arguments,
     'module' => $module,
-    'implemented_in' => $implemented_in,
+    'filepath' => $filepath,
+    'filepath_full' => $filepath_full,
     'line' => $line,
-    'is_form' => TRUE,
+    'is_form' => $is_form,
+    'is_core' => $is_core,
   );
 
 }
@@ -213,4 +232,34 @@ function pathinfo_html_page() {
   }
 
   return TRUE;
+}
+
+/**
+ * Detects whether a module is Drupal core or otherwise.
+ * 
+ * @param string $module_name
+ *   Machine name of a drupal module.
+ *
+ * @return bool
+ *   TRUE if a core module, FALSE if not.
+ */
+function pathinfo_module_is_core($module_name) {
+  $path = drupal_get_path('module', $module_name);
+  if (substr($path, 0, 7) == 'modules') {
+    return TRUE;
+  }
+  return FALSE;
+}
+
+/**
+ * Strips local filesystem information from a files include path.
+ * 
+ * @param string $fullpath
+ *   Full path including the local Drupal installation directory.
+ *
+ * @return string
+ *   Path relative to the Drupal installation directory.
+ */
+function pathinfo_get_relative_path($fullpath) {
+  return str_replace(getcwd() . '/', '', $fullpath);
 }

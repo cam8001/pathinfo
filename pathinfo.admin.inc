@@ -12,21 +12,21 @@ function pathinfo_config_form($form, &$form_state) {
   $form['pathinfo_footer_display'] = array(
     '#type' => 'checkbox',
     '#title' => t('Show Path Info details in page footer.'),
-    '#default_value' => variable_get('pathinfo_footer_display', FALSE),
+    '#default_value' => variable_get('pathinfo_footer_display', TRUE),
   );
 
   $t_arguments = array(
-    '!drupalcontrib' => l(
-      t('DrupalContrib'),
-      'http://drupalcontrib.org/',
+    '!drupal_api' => l(
+      t('Drupal API reference'),
+      'http://http://api.drupal.org/api/drupal',
       array('external' => TRUE)
     ),
   );
 
   $form['pathinfo_link_functions'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Link functions to their documentation on !drupalcontrib', $t_arguments),
-    '#default_value' => variable_get('pathinfo_link_functions', FALSE),
+    '#title' => t('Link functions to their documentation in the !drupal_api where possible.', $t_arguments),
+    '#default_value' => variable_get('pathinfo_link_functions', TRUE),
   );
 
   return system_settings_form($form);
