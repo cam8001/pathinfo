@@ -18,18 +18,7 @@ function pathinfo_init() {
  * Implements hook_menu().
  */
 function pathinfo_menu() {
-  $items['admin/config/pathinfo'] = array(
-    'title' => 'PathInfo Settings',
-    'description' => 'Settings for PathInfo',
-    'position' => 'right',
-    'page callback' => 'system_admin_menu_block_page',
-    'access arguments' => array('administer pathinfo'),
-    'file' => 'system.admin.inc',
-    'file path' => drupal_get_path('module', 'system'),
-    'weight' => -15,
-  );
-
-  $items['admin/config/pathinfo/config'] = array(
+  $items['admin/settings/pathinfo'] = array(
     'title' => 'Configure PathInfo settings',
     'position' => 'right',
     'page callback' => 'drupal_get_form',
@@ -52,14 +41,14 @@ function pathinfo_perm() {
 /**
  * Implements hook_theme().
  */
-function pathinfo_theme() {
+function pathinfo_theme($existing, $type, $theme, $path) {
   return array(
     'pathinfo_served_by' => array(
-      'arguments' => array('variables'),
+      'arguments' => array('variables' => NULL),
       'file' => 'pathinfo.theme.inc',
     ),
     'pathinfo_core_api_link' => array(
-      'arguments' => array('variables'),
+      'arguments' => array('variables' => NULL),
       'file' => 'pathinfo.theme.inc',
     ),
   );
@@ -88,7 +77,9 @@ function pathinfo_shutdown() {
  * @see theme_pathinfo_served_by()
  */
 function pathinfo_served_by($pathinfo) {
-  return theme('pathinfo_served_by', $pathinfo);
+  // Module load include seems to be causing an error :(
+  require_once 'pathinfo.theme.inc';
+  return notheme_pathinfo_served_by($pathinfo);
 }
 
 /**

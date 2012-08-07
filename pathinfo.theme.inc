@@ -2,7 +2,18 @@
 /**
  * @file
  * Contains theme implementations for pathinfo.module.
+ *
+ * Calling theme functions in shutdown causes errors on Druapl 6, so each
+ * function has been wrapped in another so that it can be called without
+ * invoking theme().
  */
+function notheme_pathinfo_served_by($variables) {
+  return theme_pathinfo_served_by($variables);
+}
+
+function notheme_pathinfo_core_api_link($variables) {
+  return theme_pathinfo_core_api_link($variables);
+}
 
 /**
  * Returns a div with a simple string describing the current path.
@@ -29,7 +40,7 @@ function theme_pathinfo_served_by($variables) {
       'function' => $variables['function'],
       'filepath' => $variables['filepath'],
     );
-    $function = theme('pathinfo_core_api_link', $args);
+    $function = notheme_pathinfo_core_api_link($args);
   }
   // Convert variable names to t() arguments.
   $t_arguments = array(
@@ -70,20 +81,19 @@ function theme_pathinfo_served_by($variables) {
  */
 function theme_pathinfo_core_api_link($variables) {
   // Drupal API functions have the file path in the url.
-  $url = 'http://api.drupal.org/api/drupal/%s/function/%s/7';
+  $url = 'http://api.drupal.org/api/drupal/%s/function/%s/6';
   // Urls in API module are encoded in a funny way.
   $url_filepath = str_replace('/', '%21', $variables['filepath']);
   $url = sprintf($url, $url_filepath, $variables['function']);
 
   // No t() here because we don't want to change function names!
   return l(
-    check_plain($variables['function']),
-    filter_xss($url),
+    $variables['function'],
+    $url,
     array(
       'options' => array(
         'external' => TRUE,
       )
     )
-  );
-  
+  ); 
 }

@@ -7,7 +7,7 @@
 /**
  * Form constructor.
  */
-function pathinfo_config_form($form, &$form_state) {
+function pathinfo_config_form() {
 
   $form['pathinfo_footer_display'] = array(
     '#type' => 'checkbox',
