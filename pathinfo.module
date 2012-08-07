@@ -55,24 +55,11 @@ function pathinfo_perm() {
 function pathinfo_theme() {
   return array(
     'pathinfo_served_by' => array(
-      'variables' => array(
-        'path' => NULL,
-        'function' => NULL,
-        'arguments' => NULL,
-        'module' => NULL,
-        'filepath' => NULL,
-        'filepath_full' => NULL,
-        'line' => NULL,
-        'is_form' => NULL,
-        'is_core' => NULL,
-      ),
+      'arguments' => array('variables'),
       'file' => 'pathinfo.theme.inc',
     ),
     'pathinfo_core_api_link' => array(
-      'variables' => array(
-        'function' => NULL,
-        'filepath' => NULL,
-      ),
+      'arguments' => array('variables'),
       'file' => 'pathinfo.theme.inc',
     ),
   );
