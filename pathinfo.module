@@ -121,7 +121,7 @@ function pathinfo_served_by($pathinfo) {
  */
 function pathinfo_get_info($path = NULL) {
   if ($path == NULL) {
-    $path = current_path();
+    $path = pathinfo_get_current_path();
   }
   $menu = menu_get_item($path);
   $arguments = array_map('check_plain', $menu['page_arguments']);
@@ -169,7 +169,12 @@ function pathinfo_get_info($path = NULL) {
  * @see current_path()
  */
 function pathinfo_get_current_path() {
-  return current_path();
+  $path = $_GET['q'];
+  // If there is no path, we must be looking at the front page.
+  if (drupal_is_front_page()) {
+    $path = drupal_get_normal_path(variable_get('site_frontpage', 'node'));
+  }
+  return $path;
 }
 
 /**
