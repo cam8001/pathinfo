@@ -21,7 +21,7 @@ Enable the module as normal. By default, the footer information is shown.
 If you want users other than user 1 to see path info, give them the 'view
 pathinfo' permission.
 
-You can also disable output without disabling the module at admin/config/pathinfo/config.
+You can also disable output without disabling the module at admin/settings/pathinfo.
 
 CONTACT
 -------
