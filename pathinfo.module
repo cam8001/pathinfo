@@ -10,7 +10,7 @@
 function pathinfo_init() {
   if (user_access('view pathinfo') && !devel_silent() && variable_get('pathinfo_footer_display', TRUE)) {
     drupal_add_css(drupal_get_path('module', 'pathinfo') . '/pathinfo.css');
-    drupal_register_shutdown_function('pathinfo_shutdown');
+    register_shutdown_function('pathinfo_shutdown');
   }
 }
 
