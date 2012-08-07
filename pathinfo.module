@@ -237,7 +237,18 @@ function pathinfo_html_page() {
 
 /**
  * Detects whether a module is Drupal core or otherwise.
- * 
+ *
+ * @todo Integrate other modules into API links.
+ * As this is used solely to link functions to API docs, it could return TRUE
+ * for other modules that are documented at api.drupal.org:
+ *   - devel
+ *   - views
+ * That would require parsing the path to the module differently so that links
+ * to API docs could be generated.
+ *
+ * See http://api.drupal.org/api/projects and theme_pathinfo_core_api_link()
+ * for more details.
+ *
  * @param string $module_name
  *   Machine name of a drupal module.
  *
@@ -254,7 +265,7 @@ function pathinfo_module_is_core($module_name) {
 
 /**
  * Strips local filesystem information from a files include path.
- * 
+ *
  * @param string $fullpath
  *   Full path including the local Drupal installation directory.
  *

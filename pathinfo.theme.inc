@@ -60,7 +60,7 @@ function theme_pathinfo_served_by($variables) {
 
 /**
  * Generates a link to Drupal API documentation.
- * 
+ *
  * @param array $variables
  *   An associative array containing:
  *   - function: The name of the function to link to.
@@ -85,5 +85,4 @@ function theme_pathinfo_core_api_link($variables) {
       )
     )
   );
-  
 }
