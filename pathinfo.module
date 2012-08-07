@@ -227,7 +227,7 @@ function pathinfo_module_is_core($module_name) {
 }
 
 /**
- * Strips local filesystem information from a files include path.
+ * Strips local filesystem information from a file's include path.
  *
  * @param string $fullpath
  *   Full path including the local Drupal installation directory.
@@ -236,5 +236,21 @@ function pathinfo_module_is_core($module_name) {
  *   Path relative to the Drupal installation directory.
  */
 function pathinfo_get_relative_path($fullpath) {
-  return str_replace(getcwd() . '/', '', $fullpath);
+  $drupal_base_dir = _pathinfo_get_drupal_install_dir();
+  $relative_path = str_replace($drupal_base_dir . '/', '', $fullpath);
+  return $relative_path;
+}
+
+/**
+ * Gets the docroot of the current drupal install.
+ *
+ * @return string
+ *   Full path to Drupal docroot.
+ *
+ * @link http://api.drupal.org/api/drupal/includes%21common.inc/function/base_path/6#comment-5159 @endlink
+ */
+function _pathinfo_get_drupal_install_dir() {
+  $absolute_dir = dirname(__FILE__);
+  $relative_dir = drupal_get_path('module', 'pathinfo');
+  return substr($absolute_dir, 0, -1 * (1 + strlen($relative_dir)));
 }
