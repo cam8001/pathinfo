@@ -18,7 +18,7 @@ function pathinfo_config_form() {
   $t_arguments = array(
     '!drupal_api' => l(
       t('Drupal API reference'),
-      'http://http://api.drupal.org/api/drupal',
+      'http://api.drupal.org/api/drupal',
       array('external' => TRUE)
     ),
   );

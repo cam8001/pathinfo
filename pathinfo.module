@@ -19,7 +19,8 @@ function pathinfo_init() {
  */
 function pathinfo_menu() {
   $items['admin/settings/pathinfo'] = array(
-    'title' => 'Configure PathInfo settings',
+    'title' => 'PathInfo',
+    'description' => 'Information about Drupal URLs in the footer of the page.',
     'position' => 'right',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('pathinfo_config_form'),
