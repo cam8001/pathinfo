@@ -3,7 +3,7 @@
  * @file
  * Contains theme implementations for pathinfo.module.
  *
- * Calling theme functions in shutdown causes errors on Druapl 6, so each
+ * Calling theme functions in shutdown causes errors on Drupal 6, so each
  * function has been wrapped in another so that it can be called without
  * invoking theme().
  */
@@ -46,7 +46,6 @@ function theme_pathinfo_served_by($variables) {
   $t_arguments = array(
     '@path' => $variables['path'],
     '!function' => $function,
-    '@arguments' => implode(',', $variables['arguments']),
     '@module' => $variables['module'],
     '@implemented_in' => $variables['filepath_full'],
     '@line' => $variables['line'],
@@ -56,11 +55,20 @@ function theme_pathinfo_served_by($variables) {
     $message .= ' (form definition)';
   }
   $message .= ', implemented by @module in @implemented_in at line @line';
-  if ($variables['arguments']) {
-    $message .= ' with arguments: @arguments';
-  }
 
-  $message = t_safe($message, $t_arguments);
+  if ($variables['complex_arguments']) {
+    $message = t_safe($message, $t_arguments);
+    $message .=  t(' with ') . theme('pathinfo_complex_arguments', $variables);
+    //$message .= ' with complex arguments.';
+  }
+  else {
+    if ($variables['arguments']) {
+      $t_arguments['@arguments'] = implode(',', $variables['arguments']);
+      $message .= ' with arguments: @arguments';
+    }
+    $message = t_safe($message, $t_arguments);
+  }
+ 
   $output = '<div class="pathinfo pathinfo-served-by">';
   $output .= l(t('PathInfo: '), 'admin/config/pathinfo/config');
   $output .= $message;
@@ -96,4 +104,40 @@ function theme_pathinfo_core_api_link($variables) {
       )
     )
   ); 
+}
+
+/**
+ * Formats complex arguments.
+ *
+ * @param array $variables
+ *   An associative array containing:
+ *   - link_text: Text to show as the link to view the arguments.
+ *   - arguments: Array of function arguments.
+ *
+ * @ingroup themeable
+ */
+function theme_pathinfo_complex_arguments($variables) {
+  $link_text = isset($variables['link_text']) ? $variables['link_text'] : t_safe('complex arguments');
+  // kprint_r requires a user access check which seems to fail for us, even
+  // as user 1. Use krumo_ob directly.
+  $arg_output = krumo_ob($variables['arguments']);
+  // @see pathinfo_init() for accompanying Javascript.
+  $args_css_id = 'pathinfo-args-output';
+  $link_css_id = 'pathinfo-args-showhide';
+  $arg_output = <<<OUTPUT
+<div id="$args_css_id">
+  {$arg_output}
+</div>
+OUTPUT;
+
+  $link = l($link_text, $variables['path'], array(
+    'fragment' => $args_css_id,
+    'attributes' => array(
+      'id' => $link_css_id,
+      'title' => t('Show arguments'),
+    ),
+  ));
+
+  $output = $link . $arg_output;
+  return $output;
 }

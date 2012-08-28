@@ -8,6 +8,10 @@
  * Implements hook_init().
  */
 function pathinfo_init() {
+  // A hack to get around a limitation with register_shutdown_function, where
+  // the cwd can change during shutdown.
+  // @link http://php.net/manual/en/function.register-shutdown-function.php#refsect1-function.register-shutdown-function-notes @endlink
+  define('PATHINFO_DRUPAL_ROOT', getcwd());
   if (user_access('view pathinfo') && !devel_silent() && variable_get('pathinfo_footer_display', TRUE)) {
     drupal_add_css(drupal_get_path('module', 'pathinfo') . '/pathinfo.css');
     register_shutdown_function('pathinfo_shutdown');
@@ -52,6 +56,10 @@ function pathinfo_theme($existing, $type, $theme, $path) {
       'arguments' => array('variables' => NULL),
       'file' => 'pathinfo.theme.inc',
     ),
+    'pathinfo_complex_arguments' => array(
+      'arguments' => array('variables' => NULL),
+      'file' => 'pathinfo.theme.inc',
+    ),
   );
 }
 
@@ -59,6 +67,9 @@ function pathinfo_theme($existing, $type, $theme, $path) {
  * Shutdown callback.
  */
 function pathinfo_shutdown() {
+  // Make sure that the working directory does not change during the request.
+  // @see pathinfo_init()
+  chdir(PATHINFO_DRUPAL_ROOT);
   // Try not to break non html pages.
   if (pathinfo_html_page()) {
     print pathinfo_served_by(pathinfo_get_info());
@@ -103,8 +114,7 @@ function pathinfo_get_info($path = NULL) {
     $path = pathinfo_get_current_path();
   }
   $menu = menu_get_item($path);
-  $arguments = array_map('check_plain', $menu['page_arguments']);
-  $arguments = $arguments;
+  $arguments = $menu['page_arguments'];
   $function = $menu['page_callback'];
   $is_form = FALSE;
   // Get the module this callback is implemented in.
@@ -115,6 +125,12 @@ function pathinfo_get_info($path = NULL) {
     $is_form = TRUE;
     unset($arguments[0]);
   }
+  $complex_arguments = pathinfo_complex_arguments($arguments);
+  // If there's only scalar arguments, cast them all to a string.
+  if ($complex_arguments == FALSE) {
+    $arguments = array_map('strval', $arguments);
+  }
+  
   $module = pathinfo_get_module_for_function($function);
 
   // Find the file this function is in.
@@ -129,6 +145,7 @@ function pathinfo_get_info($path = NULL) {
     'path' => $path,
     'function' => $function,
     'arguments' => $arguments,
+    'complex_arguments' => $complex_arguments,
     'module' => $module,
     'filepath' => $filepath,
     'filepath_full' => $filepath_full,
@@ -254,4 +271,52 @@ function _pathinfo_get_drupal_install_dir() {
   $absolute_dir = dirname(__FILE__);
   $relative_dir = drupal_get_path('module', 'pathinfo');
   return substr($absolute_dir, 0, -1 * (1 + strlen($relative_dir)));
+}
+
+/**
+ * Checks whether any values in an array (like an argument list) are complex
+ * (cannot be easily cast to a string).
+ *
+ * @param array $arguments
+ *   An array of variables of any type.
+ *
+ * @return mixed
+ *   TRUE is any of the variables are complex, FALSE if not.
+ *
+ * @see pathinfo_is_simple_type()
+ */
+function pathinfo_complex_arguments($arguments) {
+  $is_simple = TRUE;
+  foreach ($arguments as $variable) {
+    $is_simple = $is_simple && pathinfo_is_simple_type($variable);
+  }
+  if ($is_simple) {
+    // All of the arguments are simple.
+    return FALSE;
+  }
+
+  // At least one of the variables is not a simple type.
+  return TRUE;
+}
+
+/**
+ * Checks whether a variable is of a type that can easily be cast to a string -
+ * that is, any type except array, object, or resource.
+ *
+ * @param mixed $variable
+ *   Any variable.
+ *
+ * @return boolean
+ *   TRUE if it is a simple type, FALSE if not.
+ *
+ * @see gettype()
+ */
+function pathinfo_is_simple_type($variable) {
+  $type = gettype($variable);
+  // Doesn't handle resource types as yet. @see get_resource_type()
+  if (in_array($type, array('boolean', 'integer', 'double', 'string', 'resource', 'NULL', 'unknown type'))) {
+    return TRUE;
+  }
+
+  return FALSE;
 }
